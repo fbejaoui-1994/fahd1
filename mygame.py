@@ -1,31 +1,40 @@
 import streamlit as st
 import random
 
-# Initialize session state for number and guess count
-if 'number_to_guess' not in st.session_state:
-    st.session_state.number_to_guess = random.randint(1, 100)
+# --- Configuration ---
+st.set_page_config(page_title="Guess the Number", page_icon="🎯", layout="centered")
+
+# --- Helper Functions ---
+def generate_number(difficulty):
+    ranges = {'Easy': (1, 50), 'Medium': (1, 100), 'Hard': (1, 200)}
+    return random.randint(*ranges[difficulty])
+
+# --- Initialize Session State ---
+if "game_started" not in st.session_state:
+    st.session_state.game_started = False
+    st.session_state.difficulty = "Medium"
+    st.session_state.number_to_guess = None
     st.session_state.attempts = 0
     st.session_state.game_over = False
 
-st.title("🎯 Guess the Number Game")
-st.write("I'm thinking of a number between 1 and 100. Can you guess what it is?")
+# --- Title ---
+st.title("🎯 Guess the Number")
+st.markdown("Can you guess the number I'm thinking of? Select a difficulty level and start playing!")
 
-# User input
-guess = st.number_input("Enter your guess", min_value=1, max_value=100, step=1)
+# --- Difficulty Selection ---
+if not st.session_state.game_started:
+    st.session_state.difficulty = st.radio(
+        "Select Difficulty:",
+        options=["Easy", "Medium", "Hard"],
+        horizontal=True
+    )
 
-if st.button("Submit Guess"):
-    if not st.session_state.game_over:
-        st.session_state.attempts += 1
-        if guess < st.session_state.number_to_guess:
-            st.info("Your guess is too low. Try again!")
-        elif guess > st.session_state.number_to_guess:
-            st.info("Your guess is too high. Try again!")
-        else:
-            st.success(f"🎉 Congratulations! You guessed the number in {st.session_state.attempts} attempts.")
-            st.session_state.game_over = True
-
-if st.session_state.game_over:
-    if st.button("Play Again"):
-        st.session_state.number_to_guess = random.randint(1, 100)
+    if st.button("Start Game"):
+        st.session_state.number_to_guess = generate_number(st.session_state.difficulty)
         st.session_state.attempts = 0
+        st.session_state.game_started = True
         st.session_state.game_over = False
+        st.success(f"Game started! I'm thinking of a number in the range for {st.session_state.difficulty} difficulty.")
+
+# --- Game Play ---
+if st.session_state_
