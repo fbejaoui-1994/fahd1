@@ -1,40 +1,57 @@
 import streamlit as st
 import random
 
-# --- Configuration ---
-st.set_page_config(page_title="Guess the Number", page_icon="🎯", layout="centered")
-
-# --- Helper Functions ---
-def generate_number(difficulty):
-    ranges = {'Easy': (1, 50), 'Medium': (1, 100), 'Hard': (1, 200)}
-    return random.randint(*ranges[difficulty])
-
-# --- Initialize Session State ---
-if "game_started" not in st.session_state:
-    st.session_state.game_started = False
-    st.session_state.difficulty = "Medium"
-    st.session_state.number_to_guess = None
+# --- Session State Initialization ---
+def init_game():
+    st.session_state.number_to_guess = random.randint(1, 100)
     st.session_state.attempts = 0
+    st.session_state.guess_history = []
     st.session_state.game_over = False
 
-# --- Title ---
-st.title("🎯 Guess the Number")
-st.markdown("Can you guess the number I'm thinking of? Select a difficulty level and start playing!")
+if 'number_to_guess' not in st.session_state:
+    init_game()
 
-# --- Difficulty Selection ---
-if not st.session_state.game_started:
-    st.session_state.difficulty = st.radio(
-        "Select Difficulty:",
-        options=["Easy", "Medium", "Hard"],
-        horizontal=True
-    )
+# --- UI Setup ---
+st.set_page_config(page_title="🎯 Guess the Number", layout="centered")
+st.markdown("## 🎯 Guess the Number Game")
+st.markdown("I'm thinking of a number between **1 and 100**. Try to guess it!")
 
-    if st.button("Start Game"):
-        st.session_state.number_to_guess = generate_number(st.session_state.difficulty)
-        st.session_state.attempts = 0
-        st.session_state.game_started = True
-        st.session_state.game_over = False
-        st.success(f"Game started! I'm thinking of a number in the range for {st.session_state.difficulty} difficulty.")
+with st.expander("🔢 Game Rules", expanded=False):
+    st.markdown("""
+    - Enter a number between 1 and 100.
+    - You'll receive hints whether your guess is too high or too low.
+    - Try to guess in the fewest attempts possible!
+    """)
 
-# --- Game Play ---
-if st.session_state_
+# --- Input Form ---
+with st.form(key="guess_form"):
+    guess = st.number_input("Enter your guess", min_value=1, max_value=100, step=1)
+    submitted = st.form_submit_button("Submit Guess")
+
+# --- Guess Logic ---
+if submitted and not st.session_state.game_over:
+    st.session_state.attempts += 1
+    st.session_state.guess_history.append(guess)
+
+    if guess < st.session_state.number_to_guess:
+        st.warning("🔽 Too low! Try again.")
+    elif guess > st.session_state.number_to_guess:
+        st.warning("🔼 Too high! Try again.")
+    else:
+        st.success(f"🎉 Correct! You guessed the number **{st.session_state.number_to_guess}** in **{st.session_state.attempts}** attempts.")
+        st.session_state.game_over = True
+
+# --- Display Guess History ---
+if st.session_state.attempts > 0:
+    st.markdown("### 📜 Guess History")
+    st.write(st.session_state.guess_history)
+
+# --- Game Over Actions ---
+if st.session_state.game_over:
+    st.balloons()
+    if st.button("🔁 Play Again"):
+        init_game()
+
+# --- Footer ---
+st.markdown("---")
+st.caption("🧠 Built with Streamlit | Game logic by OpenAI's GPT")
